@@ -166,7 +166,39 @@ data class PharmacyOfferDto(
     val price: Double,
     val estimatedDeliveryMinutes: Int,
     val isVerified: Boolean = true,
-    val contactPhone: String
+    val contactPhone: String,
+    val deliveryAvailable: Boolean = true,
+    val locality: String = ""
+)
+
+@JsonClass(generateAdapter = true)
+data class PharmacyMedicineItemDto(
+    val id: String,
+    val name: String,
+    val genericName: String = "",
+    val price: Double? = null, // null if inventory API does not provide price
+    val isInStock: Boolean = true,
+    val requiresPrescription: Boolean = false,
+    val dosageForm: String = "Tablet",
+    val deliveryAvailable: Boolean = false
+)
+
+@JsonClass(generateAdapter = true)
+data class PharmacyDetailsDto(
+    val id: String,
+    val name: String,
+    val address: String,
+    val distanceKm: Double,
+    val isOpen: Boolean = true,
+    val workingHours: String = "8:00 AM - 10:30 PM",
+    val phoneNumber: String? = null,
+    val deliveryAvailable: Boolean = true,
+    val rating: Double = 4.5,
+    val lat: Double? = null,
+    val lng: Double? = null,
+    val locality: String = "",
+    val medicines: List<PharmacyMedicineItemDto> = emptyList(),
+    val hasInventoryApiData: Boolean = true
 )
 
 @JsonClass(generateAdapter = true)

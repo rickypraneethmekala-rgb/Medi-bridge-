@@ -105,6 +105,16 @@ interface MedicineApi {
 }
 
 interface PharmacyApi {
+    @GET("pharmacies/nearby")
+    suspend fun getNearbyPharmacies(
+        @Query("lat") lat: Double,
+        @Query("lng") lng: Double,
+        @Query("radius") radius: Int? = 5000
+    ): Response<List<PharmacyDetailsDto>>
+
+    @GET("pharmacies/{id}")
+    suspend fun getPharmacyDetails(@Path("id") id: String): Response<PharmacyDetailsDto>
+
     @GET("pharmacies/compare-price")
     suspend fun comparePharmaciesForMedicine(
         @Query("medicineName") medicineName: String,

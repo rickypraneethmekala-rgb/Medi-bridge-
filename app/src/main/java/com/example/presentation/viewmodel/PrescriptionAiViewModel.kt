@@ -87,9 +87,23 @@ class PrescriptionAiViewModel(application: Application) : AndroidViewModel(appli
         viewModelScope.launch {
             _aiExplanationState.value = ApiResult.Loading
             val context = getApplication<Application>()
+
+            // If Gemini API Key is configured via BuildConfig, use Gemini 3.5 Flash directly
+            val apiKey = com.example.BuildConfig.GEMINI_API_KEY
+            if (apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY") {
+                val geminiResult = com.example.core.ai.GeminiHealthService.explainMedicine(
+                    medicineName = medicineName,
+                    dosage = dosage,
+                    language = _selectedLanguage.value
+                )
+                _aiExplanationState.value = geminiResult
+                return@launch
+            }
+
+            // Fallback to custom backend AI Health Gateway if configured
             val api = RetrofitClientProvider.createService<AIHealthApi>(context, ApiConfig.ENDPOINT_AI_HEALTH)
             if (api == null) {
-                _aiExplanationState.value = ApiResult.Unconfigured("AI Prescription Explanation", "AI_API_URL")
+                _aiExplanationState.value = ApiResult.Unconfigured("AI Prescription Explanation", "GEMINI_API_KEY or AI_API_URL")
                 return@launch
             }
 

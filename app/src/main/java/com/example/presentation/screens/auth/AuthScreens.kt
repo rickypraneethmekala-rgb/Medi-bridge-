@@ -1,9 +1,11 @@
 package com.example.presentation.screens.auth
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -11,15 +13,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.core.network.ApiResult
 import com.example.core.security.UserRole
+import com.example.presentation.common.*
 import com.example.presentation.viewmodel.AuthViewModel
+import com.example.ui.theme.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthScreen(
     authViewModel: AuthViewModel,
@@ -46,57 +56,58 @@ fun AuthScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
-                .padding(24.dp)
+                .padding(MediSpacing.xl)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Image(
-                painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.ic_medibridge_logo),
+                painter = painterResource(id = R.drawable.ic_medibridge_logo),
                 contentDescription = "MediBridge Logo",
-                modifier = Modifier.size(80.dp)
+                modifier = Modifier
+                    .size(76.dp)
+                    .clip(RoundedCornerShape(MediCornerRadius.md))
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(MediSpacing.md))
             Text(
-                text = "MediBridge",
+                text = "MediBridge+",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onBackground
             )
+            Spacer(modifier = Modifier.height(MediSpacing.xs))
             Text(
                 text = if (isRegisterMode) "Create your verified healthcare account" else "Sign in to access healthcare services",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(MediSpacing.xl))
 
             // Role Selector Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            MediCard(
+                backgroundColor = MaterialTheme.colorScheme.surface
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        text = "SELECT YOUR ROLE",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                Column {
+                    MediSectionHeader(
+                        title = "Select Your Role",
+                        accentColor = MediTeal
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(MediSpacing.xs))
                     Box {
                         OutlinedButton(
                             onClick = { showRoleDropdown = true },
-                            modifier = Modifier.fillMaxWidth().testTag("dropdown_role_select")
+                            modifier = Modifier.fillMaxWidth().testTag("dropdown_role_select"),
+                            shape = RoundedCornerShape(MediCornerRadius.md)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(selectedRole.displayName, fontWeight = FontWeight.SemiBold)
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                                Text(selectedRole.displayName, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = MediTeal)
                             }
                         }
                         DropdownMenu(
@@ -108,7 +119,7 @@ fun AuthScreen(
                                     text = {
                                         Column {
                                             Text(role.displayName, fontWeight = FontWeight.Bold)
-                                            Text(role.description, style = MaterialTheme.typography.bodySmall)
+                                            Text(role.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                     },
                                     onClick = {
@@ -122,58 +133,65 @@ fun AuthScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(MediSpacing.md))
 
             if (isRegisterMode) {
-                OutlinedTextField(
+                MediOutlinedTextField(
                     value = fullName,
                     onValueChange = { fullName = it },
                     label = { Text("Full Name") },
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                    modifier = Modifier.fillMaxWidth().testTag("input_fullname")
+                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = MediTeal) },
+                    modifier = Modifier.fillMaxWidth().testTag("input_full_name"),
+                    shape = RoundedCornerShape(MediCornerRadius.md)
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                OutlinedTextField(
+                Spacer(modifier = Modifier.height(MediSpacing.md))
+
+                MediOutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
-                    label = { Text("Mobile Phone") },
-                    leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
-                    modifier = Modifier.fillMaxWidth().testTag("input_phone")
+                    label = { Text("Phone Number") },
+                    leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = MediTeal) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    modifier = Modifier.fillMaxWidth().testTag("input_phone"),
+                    shape = RoundedCornerShape(MediCornerRadius.md)
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(MediSpacing.md))
 
                 if (selectedRole != UserRole.PATIENT) {
-                    OutlinedTextField(
+                    MediOutlinedTextField(
                         value = licenseNumber,
                         onValueChange = { licenseNumber = it },
-                        label = { Text("Medical / Registration / License ID") },
-                        leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth().testTag("input_license")
+                        label = { Text("License / Registration Number") },
+                        leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null, tint = MediTeal) },
+                        modifier = Modifier.fillMaxWidth().testTag("input_license"),
+                        shape = RoundedCornerShape(MediCornerRadius.md)
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(MediSpacing.md))
                 }
             }
 
-            OutlinedTextField(
+            MediOutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email Address") },
-                leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth().testTag("input_email")
+                leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = MediTeal) },
+                modifier = Modifier.fillMaxWidth().testTag("input_email"),
+                shape = RoundedCornerShape(MediCornerRadius.md)
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(MediSpacing.md))
 
-            OutlinedTextField(
+            MediOutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
-                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth().testTag("input_password")
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MediTeal) },
+                modifier = Modifier.fillMaxWidth().testTag("input_password"),
+                shape = RoundedCornerShape(MediCornerRadius.md)
             )
 
             if (authState is ApiResult.HttpError) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(MediSpacing.sm))
                 Text(
                     text = (authState as ApiResult.HttpError).userMessage,
                     color = MaterialTheme.colorScheme.error,
@@ -181,7 +199,7 @@ fun AuthScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(MediSpacing.xl))
 
             Button(
                 onClick = {
@@ -200,18 +218,24 @@ fun AuthScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(MediButtonHeight.standard)
                     .testTag("btn_auth_submit"),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(MediCornerRadius.md),
+                colors = ButtonDefaults.buttonColors(containerColor = MediTeal)
             ) {
                 if (authState is ApiResult.Loading) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp))
                 } else {
-                    Text(if (isRegisterMode) "Create Account" else "Sign In", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        if (isRegisterMode) "Create Account" else "Sign In",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(MediSpacing.md))
 
             TextButton(
                 onClick = {
@@ -221,7 +245,9 @@ fun AuthScreen(
                 modifier = Modifier.testTag("btn_toggle_auth_mode")
             ) {
                 Text(
-                    if (isRegisterMode) "Already have an account? Sign In" else "New to MediBridge? Create Account"
+                    if (isRegisterMode) "Already have an account? Sign In" else "New to MediBridge+? Create Account",
+                    color = MediTeal,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }

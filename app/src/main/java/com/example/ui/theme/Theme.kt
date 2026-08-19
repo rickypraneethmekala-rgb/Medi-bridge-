@@ -10,62 +10,87 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-private val LightColorScheme = lightColorScheme(
-    primary = TealPrimary,
-    onPrimary = OnTealPrimary,
-    primaryContainer = TealPrimaryContainer,
-    onPrimaryContainer = OnTealPrimaryContainer,
-    secondary = SecondaryNavy,
-    onSecondary = OnSecondaryNavy,
-    secondaryContainer = SecondaryContainer,
-    onSecondaryContainer = OnSecondaryContainer,
-    tertiary = TertiaryBlue,
-    onTertiary = OnTertiaryBlue,
-    tertiaryContainer = TertiaryContainer,
-    onTertiaryContainer = OnTertiaryContainer,
-    error = ErrorRed,
-    onError = OnErrorRed,
-    errorContainer = ErrorContainer,
-    onErrorContainer = OnErrorContainer,
-    background = BackgroundLight,
-    onBackground = OnBackgroundLight,
-    surface = SurfaceLight,
-    onSurface = OnSurfaceLight,
-    surfaceVariant = SurfaceVariantLight,
-    onSurfaceVariant = OnSurfaceVariantLight,
-    outline = OutlineLight
+// ============================================================================
+// MediBridge+ Premium Healthcare Design System: Theme Configuration
+// ============================================================================
+
+val MediLightColorScheme = lightColorScheme(
+    primary = MediNavy,
+    onPrimary = MediOnNavy,
+    primaryContainer = MediNavyContainer,
+    onPrimaryContainer = MediTextPrimary,
+
+    secondary = MediTeal,
+    onSecondary = MediOnTeal,
+    secondaryContainer = MediTealContainer,
+    onSecondaryContainer = MediActionTealText,
+
+    tertiary = MediCyan,
+    onTertiary = MediOnNavy,
+    tertiaryContainer = MediCyanLight,
+    onTertiaryContainer = MediNavy,
+
+    background = MediBackgroundLight,
+    onBackground = MediTextPrimary,
+
+    surface = MediSurfaceLight,
+    onSurface = MediTextPrimary,
+
+    surfaceVariant = MediSurfaceVariantLight,
+    onSurfaceVariant = MediTextSecondary,
+
+    outline = MediInputBorderLight,
+    outlineVariant = MediBorderLight,
+
+    error = MediError,
+    onError = MediOnError,
+    errorContainer = MediErrorBg,
+    onErrorContainer = MediErrorText
 )
 
-private val DarkColorScheme = darkColorScheme(
-    primary = TealPrimaryContainer,
-    onPrimary = OnTealPrimaryContainer,
-    primaryContainer = TealPrimary,
-    onPrimaryContainer = OnTealPrimaryContainer,
-    secondary = SecondaryContainer,
-    onSecondary = OnSecondaryContainer,
-    background = OnBackgroundLight,
-    onBackground = BackgroundLight,
-    surface = OnBackgroundLight,
-    onSurface = BackgroundLight
+val MediDarkColorScheme = darkColorScheme(
+    primary = MediCyanBright,
+    onPrimary = MediNavyDark,
+    primaryContainer = MediNavyLight,
+    onPrimaryContainer = MediTextPrimaryDark,
+
+    secondary = MediTeal,
+    onSecondary = MediOnTeal,
+    secondaryContainer = MediSurfaceVariantDark,
+    onSecondaryContainer = MediTextPrimaryDark,
+
+    tertiary = MediCyan,
+    onTertiary = MediNavyDark,
+    tertiaryContainer = MediSurfaceVariantDark,
+    onTertiaryContainer = MediTextPrimaryDark,
+
+    background = MediBackgroundDark,
+    onBackground = MediTextPrimaryDark,
+
+    surface = MediSurfaceDark,
+    onSurface = MediTextPrimaryDark,
+
+    surfaceVariant = MediSurfaceVariantDark,
+    onSurfaceVariant = MediTextSecondaryDark,
+
+    outline = MediInputBorderDark,
+    outlineVariant = MediBorderDark,
+
+    error = MediError,
+    onError = MediOnError,
+    errorContainer = MediErrorBg,
+    onErrorContainer = MediErrorText
 )
 
 @Composable
 fun MediBridgeTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
+    darkTheme: Boolean = false, // Enforce clean crisp white theme across entire application
+    dynamicColor: Boolean = false, // Keep disabled to strictly enforce MediBridge+ brand identity
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
+    // Always use MediLightColorScheme for a pristine white healthcare aesthetic
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = MediLightColorScheme,
         typography = Typography,
         content = content
     )

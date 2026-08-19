@@ -34,3 +34,37 @@ data class CachedPrescriptionEntity(
     val medicinesJson: String,
     val isVerified: Boolean
 )
+
+@Entity(tableName = "medical_documents")
+data class MedicalDocument(
+    @PrimaryKey val id: String,
+    val userId: String = "local_patient",
+    val fileName: String,
+    val fileType: String, // "JPG", "JPEG", "PNG", "PDF"
+    val localFilePath: String,
+    val description: String = "",
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+@Entity(
+    tableName = "medicine_reminders",
+    foreignKeys = [
+        androidx.room.ForeignKey(
+            entity = MedicalDocument::class,
+            parentColumns = ["id"],
+            childColumns = ["documentId"],
+            onDelete = androidx.room.ForeignKey.CASCADE
+        )
+    ],
+    indices = [androidx.room.Index(value = ["documentId"])]
+)
+data class MedicineReminder(
+    @PrimaryKey val id: String,
+    val documentId: String? = null,
+    val medicineName: String,
+    val time: String, // e.g. "8:00 AM"
+    val instruction: String = "", // e.g. "Take after breakfast"
+    val isEnabled: Boolean = true,
+    val createdAt: Long = System.currentTimeMillis()
+)

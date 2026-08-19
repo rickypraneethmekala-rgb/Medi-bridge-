@@ -14,13 +14,26 @@
                 android:endX="108"
                 android:endY="108"
                 android:type="linear">
-                <item android:offset="0.0" android:color="#004D40" />
-                <item android:offset="1.0" android:color="#00695C" />
+                <item android:offset="0.0" android:color="#FFFFFF" />
+                <item android:offset="0.6" android:color="#F4FBFA" />
+                <item android:offset="1.0" android:color="#E1F5FE" />
             </gradient>
         </aapt:attr>
     </path>
-    <!-- Subtle circular health glow -->
+    <!-- Soft ambient healthcare depth aura -->
     <path
-        android:pathData="M54,14 A40,40 0 1,0 54,94 A40,40 0 1,0 54,14 Z"
-        android:fillColor="#10FFFFFF" />
+        android:pathData="M54,12 A42,42 0 1,0 54,96 A42,42 0 1,0 54,12 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="54"
+                android:endX="96"
+                android:endY="96"
+                android:type="radial"
+                android:gradientRadius="42">
+                <item android:offset="0.0" android:color="#2600E5FF" />
+                <item android:offset="1.0" android:color="#0000E5FF" />
+            </gradient>
+        </aapt:attr>
+    </path>
 </vector>

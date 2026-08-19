@@ -1,5 +1,8 @@
 package com.example.presentation.screens.settings
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,14 +13,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.core.config.ApiConfig
 import com.example.core.security.AuthUser
 import com.example.core.security.UserRole
+import com.example.presentation.common.*
 import com.example.presentation.viewmodel.AuthViewModel
+import com.example.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,118 +52,193 @@ fun ApiConfigScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("API & Gateway Settings", fontWeight = FontWeight.Bold) },
+                title = {
+                    Column {
+                        Text(
+                            text = "Settings & Gateway",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Account, endpoints and app preferences",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MediTeal)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
+                .padding(MediSpacing.lg)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(MediSpacing.md)
         ) {
             // Profile Card with MediBridge Logo
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+            MediCard(
+                backgroundColor = MaterialTheme.colorScheme.surface
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    androidx.compose.foundation.Image(
-                        painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.ic_medibridge_logo),
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_medibridge_logo),
                         contentDescription = "MediBridge Profile Photo",
                         modifier = Modifier
-                            .size(60.dp)
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(MediCornerRadius.md))
                             .testTag("settings_profile_photo")
                     )
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(MediSpacing.md))
                     Column {
                         Text(
                             text = currentUser?.fullName ?: "MediBridge User",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = currentUser?.email ?: "user@medibridge.org",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Text(
-                            text = "Role: ${currentUser?.role?.displayName ?: "Patient"}",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        UserRoleChip(currentUser?.role ?: UserRole.PATIENT)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
+            // Architecture Banner
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                shape = RoundedCornerShape(MediCornerRadius.md),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Text("API-First Architecture", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Column(modifier = Modifier.padding(MediSpacing.md)) {
+                    Text(
+                        "API-First Architecture",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MediTeal
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         "MediBridge connects to your real backend endpoints. Leave blank or configure custom URLs to test live integrations.",
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            MediSectionHeader(
+                title = "Backend Server URL",
+                accentColor = MediTeal
+            )
 
-            OutlinedTextField(
+            MediOutlinedTextField(
                 value = baseUrl,
                 onValueChange = { baseUrl = it },
                 label = { Text("Master Base URL (e.g. https://api.medibridge.org)") },
-                modifier = Modifier.fillMaxWidth().testTag("input_base_url")
+                modifier = Modifier.fillMaxWidth().testTag("input_base_url"),
+                shape = RoundedCornerShape(MediCornerRadius.md)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-            Text("INDIVIDUAL ENDPOINT OVERRIDES (OPTIONAL)", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(8.dp))
+            MediSectionHeader(
+                title = "Individual Service Endpoints (Optional)",
+                subtitle = "Custom routes for microservices",
+                accentColor = MediTeal
+            )
 
-            OutlinedTextField(value = hospitalUrl, onValueChange = { hospitalUrl = it }, label = { Text("Hospital Discovery URL") }, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = doctorUrl, onValueChange = { doctorUrl = it }, label = { Text("Doctor & Rosters URL") }, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = appointmentUrl, onValueChange = { appointmentUrl = it }, label = { Text("Appointment Booking URL") }, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = queueUrl, onValueChange = { queueUrl = it }, label = { Text("Live Queue Telemetry URL") }, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = prescriptionUrl, onValueChange = { prescriptionUrl = it }, label = { Text("Prescription Service URL") }, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = ocrUrl, onValueChange = { ocrUrl = it }, label = { Text("OCR Vision URL") }, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = aiHealthUrl, onValueChange = { aiHealthUrl = it }, label = { Text("AI Health / Gemini URL") }, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = pharmacyUrl, onValueChange = { pharmacyUrl = it }, label = { Text("Pharmacy Inventory URL") }, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = orderUrl, onValueChange = { orderUrl = it }, label = { Text("Order & Delivery URL") }, modifier = Modifier.fillMaxWidth())
+            MediOutlinedTextField(
+                value = hospitalUrl,
+                onValueChange = { hospitalUrl = it },
+                label = { Text("Hospital Discovery URL") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(MediCornerRadius.md)
+            )
+            MediOutlinedTextField(
+                value = doctorUrl,
+                onValueChange = { doctorUrl = it },
+                label = { Text("Doctor & Rosters URL") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(MediCornerRadius.md)
+            )
+            MediOutlinedTextField(
+                value = appointmentUrl,
+                onValueChange = { appointmentUrl = it },
+                label = { Text("Appointment Booking URL") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(MediCornerRadius.md)
+            )
+            MediOutlinedTextField(
+                value = queueUrl,
+                onValueChange = { queueUrl = it },
+                label = { Text("Live Queue Telemetry URL") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(MediCornerRadius.md)
+            )
+            MediOutlinedTextField(
+                value = prescriptionUrl,
+                onValueChange = { prescriptionUrl = it },
+                label = { Text("Prescription Service URL") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(MediCornerRadius.md)
+            )
+            MediOutlinedTextField(
+                value = ocrUrl,
+                onValueChange = { ocrUrl = it },
+                label = { Text("OCR Vision URL") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(MediCornerRadius.md)
+            )
+            MediOutlinedTextField(
+                value = aiHealthUrl,
+                onValueChange = { aiHealthUrl = it },
+                label = { Text("AI Health / Gemini URL") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(MediCornerRadius.md)
+            )
+            MediOutlinedTextField(
+                value = pharmacyUrl,
+                onValueChange = { pharmacyUrl = it },
+                label = { Text("Pharmacy Inventory URL") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(MediCornerRadius.md)
+            )
+            MediOutlinedTextField(
+                value = orderUrl,
+                onValueChange = { orderUrl = it },
+                label = { Text("Order & Delivery URL") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(MediCornerRadius.md)
+            )
 
             if (saveStatus != null) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(saveStatus!!, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                MediStatusBadge(
+                    statusText = saveStatus!!,
+                    statusType = MediStatusType.SUCCESS
+                )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(MediSpacing.xs))
 
-            Button(
+            MediPrimaryButton(
+                text = "Save Configuration",
                 onClick = {
                     ApiConfig.setBaseUrl(context, baseUrl)
                     ApiConfig.setCustomEndpoint(context, ApiConfig.ENDPOINT_HOSPITAL, hospitalUrl)
@@ -168,26 +252,24 @@ fun ApiConfigScreen(
                     ApiConfig.setCustomEndpoint(context, ApiConfig.ENDPOINT_ORDER, orderUrl)
                     saveStatus = "Endpoints saved successfully!"
                 },
-                modifier = Modifier.fillMaxWidth().height(48.dp).testTag("btn_save_api_config")
-            ) {
-                Text("Save Configuration")
-            }
+                icon = Icons.Default.Save,
+                testTag = "btn_save_api_config"
+            )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(MediSpacing.xs))
 
             // Logout Option
-            OutlinedButton(
+            MediDestructiveButton(
+                text = "Sign Out (${currentUser?.fullName ?: "User"})",
                 onClick = {
                     authViewModel.logout()
                     onBack()
                 },
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.fillMaxWidth().testTag("btn_logout")
-            ) {
-                Icon(Icons.Default.Logout, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Sign Out (${currentUser?.fullName ?: "User"})")
-            }
+                icon = Icons.Default.Logout,
+                testTag = "btn_logout"
+            )
+
+            Spacer(modifier = Modifier.height(MediSpacing.xl))
         }
     }
 }

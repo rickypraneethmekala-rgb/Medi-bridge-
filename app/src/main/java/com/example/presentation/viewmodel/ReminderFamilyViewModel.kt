@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.MediBridgeApp
+import com.example.core.alarm.MedicineAlarmPlayer
+import com.example.core.alarm.MedicineAlarmScheduler
 import com.example.core.security.SecureStorage
 import com.example.data.local.entity.LocalFamilyMemberEntity
 import com.example.data.local.entity.LocalReminderEntity
@@ -24,6 +26,9 @@ class ReminderFamilyViewModel(application: Application) : AndroidViewModel(appli
     val familyMembers = db.familyMemberDao().getAllFamilyMembers()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val isAlarmRinging = MedicineAlarmPlayer.isAlarmRinging
+    val activeAlarmMedicine = MedicineAlarmPlayer.activeAlarmMedicine
+
     private val _isSeniorMode = MutableStateFlow(secureStorage.isSeniorMode)
     val isSeniorMode: StateFlow<Boolean> = _isSeniorMode.asStateFlow()
 
@@ -34,8 +39,9 @@ class ReminderFamilyViewModel(application: Application) : AndroidViewModel(appli
 
     fun addReminder(name: String, dosage: String, timesJson: String, totalDays: Int) {
         viewModelScope.launch {
+            val remId = "rem_${System.currentTimeMillis()}"
             val entity = LocalReminderEntity(
-                id = "rem_${System.currentTimeMillis()}",
+                id = remId,
                 medicineName = name,
                 dosage = dosage,
                 reminderTimesJson = timesJson,
@@ -44,6 +50,16 @@ class ReminderFamilyViewModel(application: Application) : AndroidViewModel(appli
                 isTakenToday = false
             )
             db.reminderDao().insertReminder(entity)
+
+            // Connect and schedule with Android Local AlarmManager
+            val context = getApplication<Application>()
+            MedicineAlarmScheduler.scheduleAllTimes(
+                context = context,
+                reminderId = remId,
+                medicineName = name,
+                dosage = dosage,
+                timesString = timesJson
+            )
         }
     }
 
@@ -54,13 +70,31 @@ class ReminderFamilyViewModel(application: Application) : AndroidViewModel(appli
                 lastTakenTimestamp = System.currentTimeMillis()
             )
             db.reminderDao().updateReminder(updated)
+            // Stop alarm if it was currently ringing for this medicine
+            stopActiveAlarm()
         }
     }
 
     fun deleteReminder(reminder: LocalReminderEntity) {
         viewModelScope.launch {
+            val context = getApplication<Application>()
+            val parts = reminder.reminderTimesJson.split(",").map { it.trim() }
+            for (timeStr in parts) {
+                val (hour, minute) = MedicineAlarmScheduler.parseHourMinute(timeStr)
+                MedicineAlarmScheduler.cancelAlarm(context, reminder.id, hour, minute)
+            }
             db.reminderDao().deleteReminder(reminder)
         }
+    }
+
+    fun triggerTestAlarmNow(medicineName: String = "Paracetamol", dosage: String = "500mg (1 Tab)") {
+        val context = getApplication<Application>()
+        MedicineAlarmPlayer.startRinging(context, medicineName, dosage)
+    }
+
+    fun stopActiveAlarm() {
+        val context = getApplication<Application>()
+        MedicineAlarmPlayer.stopRinging(context)
     }
 
     fun addFamilyMember(name: String, relation: String, age: Int, emergencyPhone: String) {
@@ -83,3 +117,4 @@ class ReminderFamilyViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 }
+

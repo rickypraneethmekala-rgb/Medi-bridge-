@@ -11,12 +11,22 @@ import com.example.data.remote.api.OrderApi
 import com.example.data.remote.dto.CreateOrderRequest
 import com.example.data.remote.dto.OrderDto
 import com.example.data.remote.dto.OrderItemRequest
+import com.example.data.remote.dto.PrescriptionOrder
+import com.example.data.remote.dto.VerifiedMedicineItem
+import com.example.data.repository.PrescriptionOrderRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class OrderDeliveryViewModel(application: Application) : AndroidViewModel(application) {
+    private val repository = PrescriptionOrderRepository.getInstance(application)
+
+    val prescriptionOrders: StateFlow<List<PrescriptionOrder>> = repository.orders
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     private val _orderState = MutableStateFlow<ApiResult<OrderDto>?>(null)
     val orderState: StateFlow<ApiResult<OrderDto>?> = _orderState.asStateFlow()
 
@@ -25,6 +35,64 @@ class OrderDeliveryViewModel(application: Application) : AndroidViewModel(applic
 
     private val _otpVerificationState = MutableStateFlow<ApiResult<Boolean>?>(null)
     val otpVerificationState: StateFlow<ApiResult<Boolean>?> = _otpVerificationState.asStateFlow()
+
+    fun uploadPrescriptionRequest(
+        patientName: String,
+        patientPhone: String,
+        pharmacyId: String,
+        pharmacyName: String,
+        filePath: String,
+        fileType: String,
+        patientNote: String
+    ): PrescriptionOrder {
+        return repository.createPrescriptionRequest(
+            patientName = patientName,
+            patientPhone = patientPhone,
+            pharmacyId = pharmacyId,
+            pharmacyName = pharmacyName,
+            filePath = filePath,
+            fileType = fileType,
+            patientNote = patientNote
+        )
+    }
+
+    fun pharmacistStartReview(orderId: String) {
+        repository.pharmacistStartReview(orderId)
+    }
+
+    fun pharmacistRequestClarification(orderId: String, reason: String, requiresNewImage: Boolean) {
+        repository.pharmacistRequestClarification(orderId, reason, requiresNewImage)
+    }
+
+    fun patientSubmitClarification(orderId: String, replyMessage: String, newAttachmentPath: String?) {
+        repository.patientSubmitClarification(orderId, replyMessage, newAttachmentPath)
+    }
+
+    fun pharmacistVerifyPrescription(orderId: String, medicines: List<VerifiedMedicineItem>) {
+        repository.pharmacistVerifyPrescription(orderId, medicines)
+    }
+
+    fun pharmacistRejectPrescription(orderId: String, reason: String) {
+        repository.pharmacistRejectPrescription(orderId, reason)
+    }
+
+    fun patientConfirmAndPay(orderId: String, paymentMethod: String): Boolean {
+        return repository.patientConfirmAndPay(orderId, paymentMethod)
+    }
+
+    fun pharmacyPrepareOrder(orderId: String) {
+        repository.pharmacyPrepareOrder(orderId)
+    }
+
+    fun deliveryDispatch(orderId: String, partnerName: String = "Ramesh Kumar (MediBridge Express)") {
+        repository.deliveryDispatch(orderId, partnerName)
+    }
+
+    fun verifyDeliveryOtpLocal(orderId: String, enteredOtp: String): Boolean {
+        val result = repository.verifyDeliveryOtp(orderId, enteredOtp)
+        _otpVerificationState.value = ApiResult.Success(result)
+        return result
+    }
 
     fun placeOrder(
         prescriptionId: String,

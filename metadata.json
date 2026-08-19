@@ -1,6 +1,6 @@
 {
-  "name": "MediBridge",
-  "description": "API-first healthcare platform connecting hospitals, doctors, appointments, real-time queues, OCR prescriptions, AI explanations, verified pharmacies, and delivery.",
+  "name": "MediBridge+",
+  "description": "Healthcare gateway connecting hospitals, doctors, appointments, real-time queues, private medical document vault, verified pharmacies, and medicine reminders.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

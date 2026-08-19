@@ -2,12 +2,18 @@ package com.example.presentation.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,6 +22,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.core.security.UserRole
 import com.example.presentation.screens.appointment.AppointmentQueueScreen
 import com.example.presentation.screens.auth.AuthScreen
+import com.example.presentation.screens.documents.MyDocumentsScreen
 import com.example.presentation.screens.emergency.EmergencyBottomSheet
 import com.example.presentation.screens.health.HealthScreen
 import com.example.presentation.screens.home.HomeScreen
@@ -27,23 +34,27 @@ import com.example.presentation.screens.prescription.PrescriptionAiScreen
 import com.example.presentation.screens.settings.ApiConfigScreen
 import com.example.presentation.viewmodel.*
 
-sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null) {
+sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null, val testTag: String = "") {
     data object Auth : Screen("auth", "Sign In")
-    data object Home : Screen("home", "Home", Icons.Default.Home)
+    data object Home : Screen("home", "Home", Icons.Default.Home, "bottom_tab_home")
     data object Hospitals : Screen("hospitals", "Hospitals", Icons.Default.LocalHospital)
-    data object Appointments : Screen("appointments", "Appointments", Icons.Default.EventAvailable)
-    data object Medicines : Screen("medicines", "Medicines", Icons.Default.Medication)
-    data object Prescriptions : Screen("prescriptions", "Prescriptions", Icons.Default.DocumentScanner)
-    data object Health : Screen("health", "Health", Icons.Default.Favorite)
+    data object Appointments : Screen("appointments", "Appt", Icons.Default.EventAvailable, "bottom_tab_appt")
+    data object Medicines : Screen("medicines", "Medi", Icons.Default.Medication, "bottom_tab_medi")
+    data object AiAssistant : Screen("ai_assistant", "AI", Icons.Default.AutoAwesome, "bottom_tab_ai")
+    data object Documents : Screen("documents", "Documents", Icons.Default.Folder, "bottom_tab_documents")
+    data object Health : Screen("health", "Health", Icons.Default.Favorite, "bottom_tab_health")
     data object Orders : Screen("orders", "Orders", Icons.Default.LocalShipping)
     data object RolePortal : Screen("role_portal", "Portal", Icons.Default.Dashboard)
-    data object ApiConfig : Screen("api_config", "Settings", Icons.Default.Settings)
+    data object ApiConfig : Screen("api_config", "Settings", Icons.Default.Settings, "bottom_tab_settings")
 }
 
+// Exactly 7 tabs in order: Home | Appt | Medi | AI | Documents | Health | Settings
 val patientBottomTabs = listOf(
     Screen.Home,
     Screen.Appointments,
     Screen.Medicines,
+    Screen.AiAssistant,
+    Screen.Documents,
     Screen.Health,
     Screen.ApiConfig
 )
@@ -53,9 +64,10 @@ fun MediBridgeNavHost(
     authViewModel: AuthViewModel = viewModel(),
     hospitalViewModel: HospitalDoctorViewModel = viewModel(),
     appointmentViewModel: AppointmentQueueViewModel = viewModel(),
-    prescriptionViewModel: PrescriptionAiViewModel = viewModel(),
+    documentsViewModel: MyDocumentsViewModel = viewModel(),
     medicineViewModel: MedicinePharmacyViewModel = viewModel(),
     orderViewModel: OrderDeliveryViewModel = viewModel(),
+    prescriptionAiViewModel: PrescriptionAiViewModel = viewModel(),
     reminderViewModel: ReminderFamilyViewModel = viewModel()
 ) {
     val navController = rememberNavController()
@@ -71,13 +83,40 @@ fun MediBridgeNavHost(
     Scaffold(
         bottomBar = {
             if (currentUser != null && currentRoute != Screen.Auth.route) {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 3.dp
+                ) {
                     if (isPatient) {
                         patientBottomTabs.forEach { screen ->
+                            val isSelected = currentRoute == screen.route
                             NavigationBarItem(
-                                icon = { Icon(screen.icon!!, contentDescription = screen.title) },
-                                label = { Text(screen.title) },
-                                selected = currentRoute == screen.route,
+                                icon = {
+                                    Icon(
+                                        imageVector = screen.icon!!,
+                                        contentDescription = screen.title,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = screen.title,
+                                        fontSize = 10.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                },
+                                alwaysShowLabel = true,
+                                selected = isSelected,
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = com.example.ui.theme.MediTeal,
+                                    selectedTextColor = com.example.ui.theme.MediTeal,
+                                    indicatorColor = com.example.ui.theme.MediTealLight,
+                                    unselectedIconColor = com.example.ui.theme.MediTextSecondary,
+                                    unselectedTextColor = com.example.ui.theme.MediTextSecondary
+                                ),
                                 onClick = {
                                     if (currentRoute != screen.route) {
                                         navController.navigate(screen.route) {
@@ -86,21 +125,36 @@ fun MediBridgeNavHost(
                                             restoreState = true
                                         }
                                     }
-                                }
+                                },
+                                modifier = Modifier.testTag(screen.testTag)
                             )
                         }
                     } else {
                         // Non-patient role (Doctor, Pharmacist, Delivery Partner, Admin)
                         NavigationBarItem(
-                            icon = { Icon(Icons.Default.Dashboard, contentDescription = "Portal") },
-                            label = { Text("Portal") },
+                            icon = { Icon(Icons.Default.Dashboard, contentDescription = "Portal", modifier = Modifier.size(22.dp)) },
+                            label = { Text("Portal", fontSize = 11.sp, fontWeight = FontWeight.SemiBold) },
                             selected = currentRoute == Screen.RolePortal.route,
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = com.example.ui.theme.MediTeal,
+                                selectedTextColor = com.example.ui.theme.MediTeal,
+                                indicatorColor = com.example.ui.theme.MediTealLight,
+                                unselectedIconColor = com.example.ui.theme.MediTextSecondary,
+                                unselectedTextColor = com.example.ui.theme.MediTextSecondary
+                            ),
                             onClick = { navController.navigate(Screen.RolePortal.route) }
                         )
                         NavigationBarItem(
-                            icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                            label = { Text("API Settings") },
+                            icon = { Icon(Icons.Default.Settings, contentDescription = "Settings", modifier = Modifier.size(22.dp)) },
+                            label = { Text("Settings", fontSize = 11.sp, fontWeight = FontWeight.SemiBold) },
                             selected = currentRoute == Screen.ApiConfig.route,
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = com.example.ui.theme.MediTeal,
+                                selectedTextColor = com.example.ui.theme.MediTeal,
+                                indicatorColor = com.example.ui.theme.MediTealLight,
+                                unselectedIconColor = com.example.ui.theme.MediTextSecondary,
+                                unselectedTextColor = com.example.ui.theme.MediTextSecondary
+                            ),
                             onClick = { navController.navigate(Screen.ApiConfig.route) }
                         )
                     }
@@ -138,7 +192,8 @@ fun MediBridgeNavHost(
                     onNavigateToHospitals = { navController.navigate(Screen.Hospitals.route) },
                     onNavigateToAppointments = { navController.navigate(Screen.Appointments.route) },
                     onNavigateToMedicines = { navController.navigate(Screen.Medicines.route) },
-                    onNavigateToHealthAssistant = { navController.navigate(Screen.Health.route) },
+                    onNavigateToHealthAssistant = { navController.navigate(Screen.AiAssistant.route) },
+                    onNavigateToMyDocuments = { navController.navigate(Screen.Documents.route) },
                     onNavigateToReminders = { navController.navigate(Screen.Health.route) },
                     onEmergencyTrigger = { showEmergencyModal = true }
                 )
@@ -171,13 +226,21 @@ fun MediBridgeNavHost(
             composable(Screen.Medicines.route) {
                 MedicinePharmacyScreen(
                     viewModel = medicineViewModel,
+                    orderViewModel = orderViewModel,
                     onNavigateToApiConfig = { navController.navigate(Screen.ApiConfig.route) }
                 )
             }
 
-            composable(Screen.Prescriptions.route) {
+            composable(Screen.AiAssistant.route) {
                 PrescriptionAiScreen(
-                    viewModel = prescriptionViewModel,
+                    viewModel = prescriptionAiViewModel,
+                    onNavigateToApiConfig = { navController.navigate(Screen.ApiConfig.route) }
+                )
+            }
+
+            composable(Screen.Documents.route) {
+                MyDocumentsScreen(
+                    viewModel = documentsViewModel,
                     onNavigateToApiConfig = { navController.navigate(Screen.ApiConfig.route) }
                 )
             }
@@ -200,6 +263,7 @@ fun MediBridgeNavHost(
                 currentUser?.let { user ->
                     RolePortalScreen(
                         user = user,
+                        orderViewModel = orderViewModel,
                         onNavigateToApiConfig = { navController.navigate(Screen.ApiConfig.route) },
                         onSwitchRole = { newRole ->
                             authViewModel.switchRoleForDemo(newRole)

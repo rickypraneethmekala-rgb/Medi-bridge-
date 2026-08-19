@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "MediBridge"
+rootProject.name = "MediBridge+"
 
 include(":app")
