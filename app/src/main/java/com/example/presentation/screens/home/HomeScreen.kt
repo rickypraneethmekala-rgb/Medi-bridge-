@@ -6,9 +6,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,20 +26,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.core.security.AuthUser
-import com.example.presentation.common.*
+import com.example.presentation.common.UserRoleChip
 import com.example.ui.theme.*
 
 @Composable
 fun HomeScreen(
     currentUser: AuthUser?,
     isSeniorMode: Boolean,
-    onNavigateToHospitals: () -> Unit,
-    onNavigateToAppointments: () -> Unit,
-    onNavigateToMedicines: () -> Unit,
-    onNavigateToHealthAssistant: () -> Unit,
-    onNavigateToMyDocuments: () -> Unit,
-    onNavigateToReminders: () -> Unit,
-    onEmergencyTrigger: () -> Unit
+    onNavigateToFindDoctorHospital: () -> Unit,
+    onNavigateToBookLiveQueue: () -> Unit,
+    onNavigateToAiAssistant: () -> Unit,
+    onNavigateToPharmacyOrders: () -> Unit,
+    onNavigateToMedicineReminders: () -> Unit,
+    onNavigateToMyDocuments: () -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -46,155 +47,138 @@ fun HomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
+            .testTag("screen_home")
     ) {
-        // Top Header with MediBridge+ Branding & Profile Photo
+        // Patient Header Bar
         Surface(
             color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = MediSpacing.lg, vertical = MediSpacing.md)
+                    .padding(horizontal = MediSpacing.lg, vertical = MediSpacing.md),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_medibridge_logo),
-                            contentDescription = "Profile Photo - MediBridge",
-                            modifier = Modifier
-                                .size(46.dp)
-                                .clip(RoundedCornerShape(MediCornerRadius.md))
-                                .testTag("profile_photo_medibridge")
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_medibridge_logo),
+                        contentDescription = "MediBridge Logo",
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(RoundedCornerShape(MediCornerRadius.md))
+                            .testTag("profile_photo_medibridge")
+                    )
+                    Spacer(modifier = Modifier.width(MediSpacing.md))
+                    Column {
+                        Text(
+                            text = "Hello, ${currentUser?.fullName ?: "Patient"}",
+                            style = if (isSeniorMode) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.width(MediSpacing.md))
-                        Column {
-                            Text(
-                                text = "Welcome, ${currentUser?.fullName ?: "Patient"}",
-                                style = if (isSeniorMode) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.VerifiedUser,
+                                contentDescription = null,
+                                tint = MediTeal,
+                                modifier = Modifier.size(13.dp)
                             )
+                            Spacer(modifier = Modifier.width(3.dp))
                             Text(
-                                text = "MediBridge+ Healthcare Gateway",
+                                text = "Consent-Driven Healthcare Gateway",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MediTeal,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
-                    if (currentUser != null) {
-                        UserRoleChip(currentUser.role)
-                    }
+                }
+                if (currentUser != null) {
+                    UserRoleChip(currentUser.role)
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(MediSpacing.sm))
+        Spacer(modifier = Modifier.height(MediSpacing.lg))
 
-        // Emergency Quick Banner (Red 24x7)
-        EmergencyQuickAccessBanner(onEmergencyClick = onEmergencyTrigger)
-
-        Spacer(modifier = Modifier.height(MediSpacing.md))
-
-        // Quick Category Action Grid
-        Column(modifier = Modifier.padding(horizontal = MediSpacing.lg)) {
-            MediSectionHeader(
-                title = "Healthcare Pathways",
-                subtitle = "Unified patient access and clinical services",
-                accentColor = MediTeal
+        // ONLY The Six Requested Feature Cards
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = MediSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(MediSpacing.md)
+        ) {
+            // 1. Find Doctor & Hospital
+            HomeFeatureCard(
+                title = "Find Doctor & Hospital",
+                subtitle = "Search verified clinics, hospitals & specialist doctors",
+                icon = Icons.Default.LocalHospital,
+                iconTint = MediTeal,
+                iconBg = MediTealLight,
+                testTag = "home_card_find_doctor_hospital",
+                onClick = onNavigateToFindDoctorHospital
             )
 
-            Spacer(modifier = Modifier.height(MediSpacing.md))
+            // 2. Book & Live Queue
+            HomeFeatureCard(
+                title = "Book & Live Queue",
+                subtitle = "Schedule OPD appointments & track real-time queue status",
+                icon = Icons.Default.EventAvailable,
+                iconTint = Color(0xFFD97706),
+                iconBg = Color(0xFFFEF3C7),
+                testTag = "home_card_book_live_queue",
+                onClick = onNavigateToBookLiveQueue
+            )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(MediSpacing.md)
-            ) {
-                ServiceActionCard(
-                    title = "Find Hospital & Doctor",
-                    subtitle = "Govt & Pvt Hospitals, live queue waiting times",
-                    icon = Icons.Default.LocalHospital,
-                    accentColor = AccentAppt,
-                    accentBg = AccentApptBg,
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToHospitals,
-                    testTag = "card_find_hospitals"
-                )
-                ServiceActionCard(
-                    title = "Book & Live Queue",
-                    subtitle = "Digital tokens & live appointment tracker",
-                    icon = Icons.Default.EventAvailable,
-                    accentColor = AccentAppt,
-                    accentBg = AccentApptBg,
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToAppointments,
-                    testTag = "card_appointments_queue"
-                )
-            }
+            // 3. AI Health Assistant
+            HomeFeatureCard(
+                title = "AI Health Assistant",
+                subtitle = "Multilingual medicine guidance & report summaries",
+                icon = Icons.Default.AutoAwesome,
+                iconTint = Color(0xFF7C3AED),
+                iconBg = Color(0xFFF3E8FF),
+                testTag = "home_card_ai_assistant",
+                onClick = onNavigateToAiAssistant
+            )
 
-            Spacer(modifier = Modifier.height(MediSpacing.md))
+            // 4. Pharmacy & Orders
+            HomeFeatureCard(
+                title = "Pharmacy & Orders",
+                subtitle = "Nearby verified pharmacies, medicine orders & delivery",
+                icon = Icons.Default.LocalPharmacy,
+                iconTint = Color(0xFF059669),
+                iconBg = Color(0xFFDCFCE7),
+                testTag = "home_card_pharmacy_orders",
+                onClick = onNavigateToPharmacyOrders
+            )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(MediSpacing.md)
-            ) {
-                ServiceActionCard(
-                    title = "AI Health Assistant",
-                    subtitle = "Safe health education in EN, TE & HI",
-                    icon = Icons.Default.AutoAwesome,
-                    accentColor = AccentAi,
-                    accentBg = AccentAiBg,
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToHealthAssistant,
-                    testTag = "card_ai_assistant"
-                )
-                ServiceActionCard(
-                    title = "Pharmacy & Orders",
-                    subtitle = "Verified pricing, delivery & prescription OTP",
-                    icon = Icons.Default.LocalPharmacy,
-                    accentColor = AccentMedi,
-                    accentBg = AccentMediBg,
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToMedicines,
-                    testTag = "card_pharmacy_orders"
-                )
-            }
+            // 5. Medicine Reminders
+            HomeFeatureCard(
+                title = "Medicine Reminders",
+                subtitle = "Dosage alarms, schedules & family health management",
+                icon = Icons.Default.Alarm,
+                iconTint = Color(0xFF2563EB),
+                iconBg = Color(0xFFDBEAFE),
+                testTag = "home_card_medicine_reminders",
+                onClick = onNavigateToMedicineReminders
+            )
 
-            Spacer(modifier = Modifier.height(MediSpacing.md))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(MediSpacing.md)
-            ) {
-                ServiceActionCard(
-                    title = "Medicine Reminders",
-                    subtitle = "Daily dose tracker, schedules & history",
-                    icon = Icons.Default.Alarm,
-                    accentColor = MediWarning,
-                    accentBg = MediWarningBg,
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToReminders,
-                    testTag = "card_reminders"
-                )
-                ServiceActionCard(
-                    title = "My Documents",
-                    subtitle = "Store prescriptions, scans & lab reports locally",
-                    icon = Icons.Default.Folder,
-                    accentColor = AccentDocuments,
-                    accentBg = AccentDocumentsBg,
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToMyDocuments,
-                    testTag = "card_my_documents"
-                )
-            }
+            // 6. My Documents
+            HomeFeatureCard(
+                title = "My Documents",
+                subtitle = "Patient-held health records & consent-driven sharing",
+                icon = Icons.Default.FolderShared,
+                iconTint = Color(0xFF0284C7),
+                iconBg = Color(0xFFE0F2FE),
+                testTag = "home_card_my_documents",
+                onClick = onNavigateToMyDocuments
+            )
         }
 
         Spacer(modifier = Modifier.height(MediSpacing.xxl))
@@ -202,63 +186,79 @@ fun HomeScreen(
 }
 
 @Composable
-fun ServiceActionCard(
+private fun HomeFeatureCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    accentColor: Color,
-    accentBg: Color,
-    modifier: Modifier = Modifier,
+    iconTint: Color,
+    iconBg: Color,
     testTag: String,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .height(148.dp)
             .clickable(onClick = onClick)
             .testTag(testTag),
         shape = RoundedCornerShape(MediCornerRadius.lg),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        elevation = CardDefaults.cardElevation(defaultElevation = MediElevation.subtle)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(MediSpacing.md),
-            verticalArrangement = Arrangement.SpaceBetween
+                .fillMaxWidth()
+                .padding(MediSpacing.lg),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(MediCornerRadius.md))
-                    .background(accentBg),
-                contentAlignment = Alignment.Center
+            Surface(
+                color = iconBg,
+                shape = RoundedCornerShape(MediCornerRadius.md),
+                modifier = Modifier.size(50.dp)
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = accentColor,
-                    modifier = Modifier.size(MediIconSize.md)
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = title,
+                        tint = iconTint,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
-            Column {
+
+            Spacer(modifier = Modifier.width(MediSpacing.md))
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    lineHeight = 18.sp
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    lineHeight = 14.sp
+                    lineHeight = 16.sp
                 )
+            }
+
+            Spacer(modifier = Modifier.width(MediSpacing.sm))
+
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                shape = CircleShape,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                        contentDescription = "Open $title",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
             }
         }
     }

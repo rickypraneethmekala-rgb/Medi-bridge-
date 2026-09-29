@@ -86,3 +86,48 @@ interface MedicineReminderDao {
     @Query("DELETE FROM medicine_reminders WHERE documentId = :documentId")
     suspend fun deleteRemindersByDocumentId(documentId: String)
 }
+
+@Dao
+interface RecordShareDao {
+    @Query("SELECT * FROM record_shares ORDER BY sharedAt DESC")
+    fun getAllShares(): Flow<List<com.example.data.local.entity.RecordShareEntity>>
+
+    @Query("SELECT * FROM record_shares WHERE status = 'ACTIVE' ORDER BY sharedAt DESC")
+    fun getActiveShares(): Flow<List<com.example.data.local.entity.RecordShareEntity>>
+
+    @Query("SELECT * FROM record_shares WHERE (documentId = :documentId OR documentIdsJson LIKE '%' || :documentId || '%') AND status = 'ACTIVE'")
+    fun getActiveSharesForDocument(documentId: String): Flow<List<com.example.data.local.entity.RecordShareEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertShare(share: com.example.data.local.entity.RecordShareEntity)
+
+    @Update
+    suspend fun updateShare(share: com.example.data.local.entity.RecordShareEntity)
+
+    @Query("UPDATE record_shares SET accessDuration = :duration, expiresAt = :expiresAt WHERE id = :id")
+    suspend fun updateDuration(id: String, duration: String, expiresAt: Long)
+
+    @Query("UPDATE record_shares SET status = 'REVOKED' WHERE id = :id")
+    suspend fun revokeShare(id: String)
+
+    @Query("UPDATE record_shares SET status = 'REVOKED' WHERE documentId = :documentId OR documentIdsJson LIKE '%' || :documentId || '%'")
+    suspend fun revokeAllForDocument(documentId: String)
+}
+
+@Dao
+interface AccessLogDao {
+    @Query("SELECT * FROM access_logs ORDER BY timestamp DESC")
+    fun getAllLogs(): Flow<List<com.example.data.local.entity.AccessLogEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLog(log: com.example.data.local.entity.AccessLogEntity)
+}
+
+@Dao
+interface EmergencyHealthInfoDao {
+    @Query("SELECT * FROM emergency_health_info WHERE id = 'primary_emergency_info' LIMIT 1")
+    fun getEmergencyInfo(): Flow<com.example.data.local.entity.EmergencyHealthInfoEntity?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveEmergencyInfo(info: com.example.data.local.entity.EmergencyHealthInfoEntity)
+}

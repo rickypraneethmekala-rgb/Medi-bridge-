@@ -60,7 +60,8 @@ import java.util.Locale
 fun MedicinePharmacyScreen(
     viewModel: MedicinePharmacyViewModel,
     orderViewModel: OrderDeliveryViewModel,
-    onNavigateToApiConfig: () -> Unit
+    onBack: () -> Unit = {},
+    onNavigateToApiConfig: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -93,6 +94,11 @@ fun MedicinePharmacyScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MediTeal)
+                    }
+                },
                 title = { Text("Pharmacy & Orders", fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(
@@ -946,7 +952,45 @@ fun UploadPrescriptionDialog(
                     maxLines = 3
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Explicit Consent Requirement for Pharmacist Sharing (Problem Statement 3)
+                var consentGiven by remember { mutableStateOf(true) }
+                Surface(
+                    color = if (consentGiven) Color(0xFFF0FDF4) else Color(0xFFFFFBEB),
+                    shape = RoundedCornerShape(MediCornerRadius.sm),
+                    border = BorderStroke(1.dp, if (consentGiven) Color(0xFF86EFAC) else Color(0xFFFCD34D)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { consentGiven = !consentGiven }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = consentGiven,
+                            onCheckedChange = { consentGiven = it },
+                            colors = CheckboxDefaults.colors(checkedColor = MediTeal)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Column {
+                            Text(
+                                "Consent to Share with Pharmacist",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = if (consentGiven) Color(0xFF166534) else Color(0xFF92400E)
+                            )
+                            Text(
+                                "I voluntarily grant temporary 24-hour access to this prescription solely for medicine fulfillment. Revocable anytime.",
+                                fontSize = 10.5.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
@@ -962,6 +1006,7 @@ fun UploadPrescriptionDialog(
                                 patientNote
                             )
                         },
+                        enabled = consentGiven && selectedFilePath != null,
                         colors = ButtonDefaults.buttonColors(containerColor = MediTeal, contentColor = Color.White),
                         modifier = Modifier.weight(1f).testTag("btn_send_to_pharmacist")
                     ) {
@@ -1647,10 +1692,20 @@ fun PharmacyCard(
 
                 Button(
                     onClick = onClick,
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                    modifier = Modifier.testTag("btn_view_details_${pharmacy.id}")
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Black,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                    modifier = Modifier.testTag("btn_order_${pharmacy.id}")
                 ) {
-                    Text("View Details", fontSize = 12.sp)
+                    Text(
+                        text = "Order",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
+                    )
                 }
             }
         }
@@ -1929,9 +1984,16 @@ fun PharmacyOfferCard(
                 Button(
                     onClick = onOrder,
                     enabled = offer.isInStock,
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Black,
+                        contentColor = Color.White,
+                        disabledContainerColor = Color.DarkGray,
+                        disabledContentColor = Color.LightGray
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
                 ) {
-                    Text("Order", fontSize = 12.sp)
+                    Text("Order", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
             }
         }

@@ -4,16 +4,22 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.data.local.dao.AccessLogDao
 import com.example.data.local.dao.CachedPrescriptionDao
+import com.example.data.local.dao.EmergencyHealthInfoDao
 import com.example.data.local.dao.FamilyMemberDao
 import com.example.data.local.dao.MedicalDocumentDao
 import com.example.data.local.dao.MedicineReminderDao
+import com.example.data.local.dao.RecordShareDao
 import com.example.data.local.dao.ReminderDao
+import com.example.data.local.entity.AccessLogEntity
 import com.example.data.local.entity.CachedPrescriptionEntity
+import com.example.data.local.entity.EmergencyHealthInfoEntity
 import com.example.data.local.entity.LocalFamilyMemberEntity
 import com.example.data.local.entity.LocalReminderEntity
 import com.example.data.local.entity.MedicalDocument
 import com.example.data.local.entity.MedicineReminder
+import com.example.data.local.entity.RecordShareEntity
 
 @Database(
     entities = [
@@ -21,9 +27,12 @@ import com.example.data.local.entity.MedicineReminder
         LocalFamilyMemberEntity::class,
         CachedPrescriptionEntity::class,
         MedicalDocument::class,
-        MedicineReminder::class
+        MedicineReminder::class,
+        RecordShareEntity::class,
+        AccessLogEntity::class,
+        EmergencyHealthInfoEntity::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = false
 )
 abstract class MediBridgeDatabase : RoomDatabase() {
@@ -32,6 +41,9 @@ abstract class MediBridgeDatabase : RoomDatabase() {
     abstract fun cachedPrescriptionDao(): CachedPrescriptionDao
     abstract fun medicalDocumentDao(): MedicalDocumentDao
     abstract fun medicineReminderDao(): MedicineReminderDao
+    abstract fun recordShareDao(): RecordShareDao
+    abstract fun accessLogDao(): AccessLogDao
+    abstract fun emergencyHealthInfoDao(): EmergencyHealthInfoDao
 
     companion object {
         @Volatile

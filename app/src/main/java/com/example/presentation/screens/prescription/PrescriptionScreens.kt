@@ -31,7 +31,8 @@ import com.example.ui.theme.*
 @Composable
 fun PrescriptionAiScreen(
     viewModel: PrescriptionAiViewModel,
-    onNavigateToApiConfig: () -> Unit
+    onBack: () -> Unit = {},
+    onNavigateToApiConfig: () -> Unit = {}
 ) {
     val prescriptionsState by viewModel.prescriptionsState.collectAsState()
     val ocrState by viewModel.ocrState.collectAsState()
@@ -45,6 +46,11 @@ fun PrescriptionAiScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = AccentAi)
+                    }
+                },
                 title = {
                     Column {
                         Text(
@@ -213,21 +219,56 @@ fun PrescriptionAiScreen(
 
                         Spacer(modifier = Modifier.height(MediSpacing.sm))
 
-                        // Quick suggestion chips
+                        // Quick suggestion chips for record explanation, report summary, instructions, and education
                         Text(
-                            "Suggested:",
+                            "AI Capabilities (Patient Education Only):",
                             style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            items(listOf("Paracetamol 500mg", "Amoxicillin 250mg", "Metformin 500mg", "ORS Sachet", "Cetirizine 10mg")) { sampleMed ->
+                            item {
                                 SuggestionChip(
                                     onClick = {
-                                        userQueryMedicine = sampleMed
-                                        viewModel.requestAiExplanation(sampleMed, "Standard Prescribed Dosage")
+                                        userQueryMedicine = "Explain Cardiology Prescription: Amlodipine 5mg OD"
+                                        viewModel.requestAiExplanation("Amlodipine 5mg", "1 tablet daily morning for hypertension")
                                     },
-                                    label = { Text(sampleMed, fontSize = 11.sp) },
+                                    label = { Text("Explain Prescription", fontSize = 11.sp) },
+                                    icon = { Icon(Icons.Default.Medication, contentDescription = null, modifier = Modifier.size(14.dp), tint = AccentAi) },
+                                    shape = RoundedCornerShape(MediCornerRadius.pill)
+                                )
+                            }
+                            item {
+                                SuggestionChip(
+                                    onClick = {
+                                        userQueryMedicine = "Summarize CBC & Lipid Profile Report"
+                                        viewModel.requestAiExplanation("Lipid Profile (Total Cholesterol: 185 mg/dL, HDL: 48 mg/dL, LDL: 108 mg/dL)", "Normal Diagnostic Range")
+                                    },
+                                    label = { Text("Summarize Lab Report", fontSize = 11.sp) },
+                                    icon = { Icon(Icons.Default.Biotech, contentDescription = null, modifier = Modifier.size(14.dp), tint = AccentAi) },
+                                    shape = RoundedCornerShape(MediCornerRadius.pill)
+                                )
+                            }
+                            item {
+                                SuggestionChip(
+                                    onClick = {
+                                        userQueryMedicine = "Explain dosage instructions for Metformin 500mg"
+                                        viewModel.requestAiExplanation("Metformin 500mg", "Take with meals")
+                                    },
+                                    label = { Text("Explain Instructions", fontSize = 11.sp) },
+                                    icon = { Icon(Icons.Default.HelpOutline, contentDescription = null, modifier = Modifier.size(14.dp), tint = AccentAi) },
+                                    shape = RoundedCornerShape(MediCornerRadius.pill)
+                                )
+                            }
+                            item {
+                                SuggestionChip(
+                                    onClick = {
+                                        userQueryMedicine = "General hypertension lifestyle and diet guidance"
+                                        viewModel.requestAiExplanation("Hypertension Wellness Guidance", "Low sodium diet and hydration")
+                                    },
+                                    label = { Text("Health Education", fontSize = 11.sp) },
+                                    icon = { Icon(Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.size(14.dp), tint = AccentAi) },
                                     shape = RoundedCornerShape(MediCornerRadius.pill)
                                 )
                             }

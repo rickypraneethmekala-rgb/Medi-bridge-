@@ -43,8 +43,53 @@ data class MedicalDocument(
     val fileType: String, // "JPG", "JPEG", "PNG", "PDF"
     val localFilePath: String,
     val description: String = "",
+    val category: String = "Prescription", // "Prescription", "Lab Report", "Discharge Summary", "Medical Bill", "Other Medical Record"
+    val hospitalOrDoctor: String = "",
+    val recordDate: String = "",
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "record_shares")
+data class RecordShareEntity(
+    @PrimaryKey val id: String,
+    val documentId: String,
+    val documentIdsJson: String = "", // JSON array of record IDs when multiple records are shared
+    val documentName: String,
+    val documentCategory: String = "Prescription",
+    val recipientType: String, // "Doctor", "Hospital", "Pharmacist", "Authorized Caregiver"
+    val recipientName: String,
+    val accessDuration: String, // "1 Hour", "24 Hours", "7 Days", "30 Days", "Until Revoked"
+    val sharedAt: Long = System.currentTimeMillis(),
+    val expiresAt: Long = System.currentTimeMillis() + 86400000L,
+    val status: String = "ACTIVE", // "ACTIVE", "REVOKED", "EXPIRED"
+    val secureToken: String = "", // e.g. "MB-SEC-8921"
+    val purpose: String = "Clinical Consultation"
+)
+
+@Entity(tableName = "access_logs")
+data class AccessLogEntity(
+    @PrimaryKey val id: String,
+    val shareId: String,
+    val documentTitle: String,
+    val accessorName: String,
+    val accessorRole: String, // "Doctor", "Hospital", "Pharmacist", "Authorized Caregiver"
+    val action: String, // "ACCESSED", "DOWNLOADED", "REVOKED", "GRANTED"
+    val timestamp: Long = System.currentTimeMillis(),
+    val status: String = "Authorized",
+    val verificationMethod: String = "Time-Limited QR / Code"
+)
+
+@Entity(tableName = "emergency_health_info")
+data class EmergencyHealthInfoEntity(
+    @PrimaryKey val id: String = "primary_emergency_info",
+    val bloodGroup: String = "O+",
+    val allergies: String = "Penicillin, Sulfa drugs",
+    val chronicConditions: String = "Mild Hypertension",
+    val currentMedicines: String = "Amlodipine 5mg OD, Multivitamin",
+    val emergencyContactName: String = "Priya Sharma (Spouse)",
+    val emergencyContactPhone: String = "+91 98765 43210",
+    val isSharingAllowedInEmergency: Boolean = true
 )
 
 @Entity(

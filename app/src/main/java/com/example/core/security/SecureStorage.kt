@@ -30,9 +30,14 @@ class SecureStorage(context: Context) {
 
     fun getSession(): AuthUser? {
         val token = prefs.getString(KEY_AUTH_TOKEN, null) ?: return null
+        val email = prefs.getString(KEY_USER_EMAIL, "") ?: ""
+        val isGmail = Regex("^[a-zA-Z0-9._%+-]+@gmail\\.com$", RegexOption.IGNORE_CASE).matches(email.trim())
+        if (!isGmail) {
+            clearSession()
+            return null
+        }
         val id = prefs.getString(KEY_USER_ID, "") ?: ""
         val name = prefs.getString(KEY_USER_NAME, "User") ?: "User"
-        val email = prefs.getString(KEY_USER_EMAIL, "") ?: ""
         val phone = prefs.getString(KEY_USER_PHONE, "") ?: ""
         val roleStr = prefs.getString(KEY_USER_ROLE, UserRole.PATIENT.name) ?: UserRole.PATIENT.name
         val role = try { UserRole.valueOf(roleStr) } catch (e: Exception) { UserRole.PATIENT }

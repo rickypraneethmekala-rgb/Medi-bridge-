@@ -26,17 +26,33 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     val authState: StateFlow<ApiResult<AuthUser>?> = _authState.asStateFlow()
 
     fun login(email: String, password: String, role: UserRole) {
+        val trimmedEmail = email.trim()
+        val isGmailValid = Regex("^[a-zA-Z0-9._%+-]+@gmail\\.com$", RegexOption.IGNORE_CASE).matches(trimmedEmail)
+
+        if (trimmedEmail.isBlank()) {
+            _authState.value = ApiResult.HttpError(400, "Please enter your @gmail.com email address.")
+            return
+        }
+        if (!isGmailValid) {
+            _authState.value = ApiResult.HttpError(400, "Only @gmail.com email addresses are accepted (e.g. user@gmail.com).")
+            return
+        }
+        if (password.isBlank()) {
+            _authState.value = ApiResult.HttpError(400, "Please enter your password.")
+            return
+        }
+
         viewModelScope.launch {
             _authState.value = ApiResult.Loading
             val context = getApplication<Application>()
             val authApi = RetrofitClientProvider.createService<AuthApi>(context, ApiConfig.ENDPOINT_AUTH)
 
             if (authApi == null) {
-                // If API is unconfigured, create local verified session for role demonstration & testing
+                // If API is unconfigured, create local verified session with the provided Gmail account
                 val demoUser = AuthUser(
                     id = "local_usr_${System.currentTimeMillis() % 10000}",
-                    fullName = if (email.contains("@")) email.substringBefore("@").replaceFirstChar { it.uppercase() } else "User",
-                    email = email.ifBlank { "user@medibridge.org" },
+                    fullName = trimmedEmail.substringBefore("@").replaceFirstChar { it.uppercase() },
+                    email = trimmedEmail,
                     phone = "+91 98765 43210",
                     role = role,
                     token = "demo_jwt_token_${System.currentTimeMillis()}"
@@ -48,7 +64,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             val result = RetrofitClientProvider.safeApiCall("Auth") {
-                authApi.login(LoginRequest(email = email, password = password, role = role.name))
+                authApi.login(LoginRequest(email = trimmedEmail, password = password, role = role.name))
             }
 
             when (result) {
@@ -76,6 +92,26 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun register(fullName: String, email: String, phone: String, password: String, role: UserRole, regNo: String?) {
+        val trimmedEmail = email.trim()
+        val isGmailValid = Regex("^[a-zA-Z0-9._%+-]+@gmail\\.com$", RegexOption.IGNORE_CASE).matches(trimmedEmail)
+
+        if (trimmedEmail.isBlank()) {
+            _authState.value = ApiResult.HttpError(400, "Please enter your @gmail.com email address.")
+            return
+        }
+        if (!isGmailValid) {
+            _authState.value = ApiResult.HttpError(400, "Only @gmail.com email addresses are accepted (e.g. user@gmail.com).")
+            return
+        }
+        if (password.isBlank()) {
+            _authState.value = ApiResult.HttpError(400, "Please enter your password.")
+            return
+        }
+        if (fullName.trim().isBlank()) {
+            _authState.value = ApiResult.HttpError(400, "Please enter your full name.")
+            return
+        }
+
         viewModelScope.launch {
             _authState.value = ApiResult.Loading
             val context = getApplication<Application>()
@@ -84,8 +120,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             if (authApi == null) {
                 val newUser = AuthUser(
                     id = "local_usr_${System.currentTimeMillis() % 10000}",
-                    fullName = fullName.ifBlank { "New Member" },
-                    email = email,
+                    fullName = fullName.ifBlank { trimmedEmail.substringBefore("@").replaceFirstChar { it.uppercase() } },
+                    email = trimmedEmail,
                     phone = phone,
                     role = role,
                     token = "demo_jwt_token_${System.currentTimeMillis()}"
@@ -100,7 +136,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 authApi.register(
                     RegisterRequest(
                         fullName = fullName,
-                        email = email,
+                        email = trimmedEmail,
                         phone = phone,
                         password = password,
                         role = role.name,

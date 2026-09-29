@@ -36,7 +36,8 @@ import java.util.Locale
 @Composable
 fun HealthScreen(
     viewModel: ReminderFamilyViewModel,
-    onNavigateToApiConfig: () -> Unit
+    onBack: () -> Unit = {},
+    onNavigateToApiConfig: () -> Unit = {}
 ) {
     val reminders by viewModel.reminders.collectAsState()
     val familyMembers by viewModel.familyMembers.collectAsState()
@@ -65,10 +66,15 @@ fun HealthScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MediTeal)
+                    }
+                },
                 title = {
                     Column {
                         Text(
-                            text = "Health & Medicine Alarms",
+                            text = "Medicine Reminders",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = MaterialTheme.colorScheme.onSurface

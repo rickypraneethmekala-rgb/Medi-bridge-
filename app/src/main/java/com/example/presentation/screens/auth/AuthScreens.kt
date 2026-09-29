@@ -20,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
@@ -43,6 +44,8 @@ fun AuthScreen(
     var selectedRole by remember { mutableStateOf(UserRole.PATIENT) }
     var licenseNumber by remember { mutableStateOf("") }
     var showRoleDropdown by remember { mutableStateOf(false) }
+    var validationError by remember { mutableStateOf<String?>(null) }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     val authState by authViewModel.authState.collectAsState()
 
@@ -170,11 +173,29 @@ fun AuthScreen(
                 }
             }
 
+            val isGmail = Regex("^[a-zA-Z0-9._%+-]+@gmail\\.com$", RegexOption.IGNORE_CASE).matches(email.trim())
+            val hasEmailError = validationError != null && (email.trim().isBlank() || !isGmail)
+            val hasPasswordError = validationError != null && password.isBlank()
+
             MediOutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
-                label = { Text("Email Address") },
-                leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = MediTeal) },
+                onValueChange = {
+                    email = it
+                    validationError = null
+                },
+                label = { Text("Gmail Address (@gmail.com)") },
+                placeholder = { Text("yourname@gmail.com") },
+                supportingText = {
+                    val trimmed = email.trim()
+                    if (trimmed.isNotEmpty() && !isGmail) {
+                        Text("Only @gmail.com email addresses are accepted", color = MaterialTheme.colorScheme.error, fontSize = 11.sp)
+                    } else {
+                        Text("Only @gmail.com email accepted", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+                    }
+                },
+                isError = hasEmailError,
+                leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = if (hasEmailError) MaterialTheme.colorScheme.error else MediTeal) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth().testTag("input_email"),
                 shape = RoundedCornerShape(MediCornerRadius.md)
             )
@@ -182,38 +203,97 @@ fun AuthScreen(
 
             MediOutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    validationError = null
+                },
                 label = { Text("Password") },
-                visualTransformation = PasswordVisualTransformation(),
-                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MediTeal) },
+                placeholder = { Text("Enter your password") },
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                isError = hasPasswordError,
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = if (hasPasswordError) MaterialTheme.colorScheme.error else MediTeal) },
                 modifier = Modifier.fillMaxWidth().testTag("input_password"),
                 shape = RoundedCornerShape(MediCornerRadius.md)
             )
 
-            if (authState is ApiResult.HttpError) {
+            val activeErrorMessage = validationError ?: (authState as? ApiResult.HttpError)?.userMessage
+            if (activeErrorMessage != null) {
                 Spacer(modifier = Modifier.height(MediSpacing.sm))
-                Text(
-                    text = (authState as ApiResult.HttpError).userMessage,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = RoundedCornerShape(MediCornerRadius.sm),
+                    modifier = Modifier.fillMaxWidth().testTag("auth_error_banner")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.ErrorOutline,
+                            contentDescription = "Error",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = activeErrorMessage,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(MediSpacing.xl))
 
             Button(
                 onClick = {
+                    val trimmedEmail = email.trim()
+                    val isGmailValid = Regex("^[a-zA-Z0-9._%+-]+@gmail\\.com$", RegexOption.IGNORE_CASE).matches(trimmedEmail)
+
+                    if (trimmedEmail.isEmpty()) {
+                        validationError = "Please enter your email address."
+                        return@Button
+                    }
+                    if (!isGmailValid) {
+                        validationError = "Only @gmail.com email addresses are accepted (e.g. yourname@gmail.com)."
+                        return@Button
+                    }
+                    if (password.isBlank()) {
+                        validationError = "Please enter your password."
+                        return@Button
+                    }
                     if (isRegisterMode) {
+                        if (fullName.trim().isEmpty()) {
+                            validationError = "Please enter your full name."
+                            return@Button
+                        }
+                        if (phone.trim().isEmpty()) {
+                            validationError = "Please enter your phone number."
+                            return@Button
+                        }
+                        validationError = null
                         authViewModel.register(
-                            fullName = fullName,
-                            email = email,
-                            phone = phone,
+                            fullName = fullName.trim(),
+                            email = trimmedEmail,
+                            phone = phone.trim(),
                             password = password,
                             role = selectedRole,
                             regNo = licenseNumber.ifBlank { null }
                         )
                     } else {
-                        authViewModel.login(email = email, password = password, role = selectedRole)
+                        validationError = null
+                        authViewModel.login(email = trimmedEmail, password = password, role = selectedRole)
                     }
                 },
                 modifier = Modifier
@@ -240,6 +320,7 @@ fun AuthScreen(
             TextButton(
                 onClick = {
                     isRegisterMode = !isRegisterMode
+                    validationError = null
                     authViewModel.resetAuthState()
                 },
                 modifier = Modifier.testTag("btn_toggle_auth_mode")

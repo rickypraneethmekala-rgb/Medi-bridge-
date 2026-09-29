@@ -1,5 +1,6 @@
 package com.example.presentation.screens.hospital
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,22 +27,37 @@ import com.example.presentation.viewmodel.HospitalDoctorViewModel
 fun HospitalDiscoveryScreen(
     viewModel: HospitalDoctorViewModel,
     onDoctorSelected: (DoctorDto, HospitalDto) -> Unit,
-    onNavigateToApiConfig: () -> Unit
+    onBack: () -> Unit = {},
+    onNavigateToApiConfig: () -> Unit = {}
 ) {
     val hospitalsState by viewModel.hospitalsState.collectAsState()
     val doctorsState by viewModel.doctorsState.collectAsState()
     val selectedHospital by viewModel.selectedHospital.collectAsState()
     val currentFilter by viewModel.selectedTypeFilter.collectAsState()
 
+    BackHandler {
+        if (selectedHospital != null) {
+            viewModel.loadHospitals()
+        } else {
+            onBack()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (selectedHospital == null) "Hospital Discovery" else selectedHospital!!.name, fontWeight = FontWeight.Bold) },
+                title = { Text(if (selectedHospital == null) "Find Doctor & Hospital" else selectedHospital!!.name, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    if (selectedHospital != null) {
-                        IconButton(onClick = { viewModel.loadHospitals() }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    IconButton(
+                        onClick = {
+                            if (selectedHospital != null) {
+                                viewModel.loadHospitals()
+                            } else {
+                                onBack()
+                            }
                         }
+                    ) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {

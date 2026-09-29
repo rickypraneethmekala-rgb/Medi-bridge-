@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -35,7 +36,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun AppointmentQueueScreen(
     viewModel: AppointmentQueueViewModel,
-    onNavigateToApiConfig: () -> Unit
+    onBack: () -> Unit = {},
+    onNavigateToApiConfig: () -> Unit = {}
 ) {
     val appointmentsState by viewModel.appointmentsState.collectAsState()
     val liveQueueState by viewModel.liveQueueState.collectAsState()
@@ -44,10 +46,15 @@ fun AppointmentQueueScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MediTeal)
+                    }
+                },
                 title = {
                     Column {
                         Text(
-                            text = "Appointments & Live Queue",
+                            text = "Book & Live Queue",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = MaterialTheme.colorScheme.onSurface
@@ -738,6 +745,51 @@ fun DemoAppointmentCard(onTrackQueue: () -> Unit) {
                 Text("Track Queue", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Patient Voluntary Consent for Consultation Record Sharing
+        var demoRecordSharingConsent by remember { mutableStateOf(false) }
+        Surface(
+            color = if (demoRecordSharingConsent) Color(0xFFF0FDF4) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+            shape = RoundedCornerShape(MediCornerRadius.sm),
+            border = BorderStroke(1.dp, if (demoRecordSharingConsent) Color(0xFF86EFAC) else MaterialTheme.colorScheme.outline),
+            modifier = Modifier.fillMaxWidth().clickable { demoRecordSharingConsent = !demoRecordSharingConsent }
+        ) {
+            Row(
+                modifier = Modifier.padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Icon(
+                        Icons.Default.Shield,
+                        contentDescription = null,
+                        tint = if (demoRecordSharingConsent) Color(0xFF16A34A) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Column {
+                        Text(
+                            text = if (demoRecordSharingConsent) "Consent Granted: Previous Records (24h)" else "Share Health Records with Doctor?",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.5.sp,
+                            color = if (demoRecordSharingConsent) Color(0xFF166534) else MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = if (demoRecordSharingConsent) "Dr. Anil Kumar can view your latest prescription & reports. Revocable anytime." else "Voluntarily allow doctor temporary 24-hr access for this consultation.",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Checkbox(
+                    checked = demoRecordSharingConsent,
+                    onCheckedChange = { demoRecordSharingConsent = it },
+                    colors = CheckboxDefaults.colors(checkedColor = MediTeal)
+                )
+            }
+        }
     }
 }
 
@@ -804,6 +856,51 @@ fun AppointmentItemCard(appointment: AppointmentDto, onTrackQueue: () -> Unit) {
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
             ) {
                 Text("Track Queue", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Patient Voluntary Consent for Consultation Record Sharing
+        var recordSharingConsent by remember { mutableStateOf(false) }
+        Surface(
+            color = if (recordSharingConsent) Color(0xFFF0FDF4) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+            shape = RoundedCornerShape(MediCornerRadius.sm),
+            border = BorderStroke(1.dp, if (recordSharingConsent) Color(0xFF86EFAC) else MaterialTheme.colorScheme.outline),
+            modifier = Modifier.fillMaxWidth().clickable { recordSharingConsent = !recordSharingConsent }
+        ) {
+            Row(
+                modifier = Modifier.padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Icon(
+                        Icons.Default.Shield,
+                        contentDescription = null,
+                        tint = if (recordSharingConsent) Color(0xFF16A34A) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Column {
+                        Text(
+                            text = if (recordSharingConsent) "Consent Granted: Previous Records (24h)" else "Share Health Records with Doctor?",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.5.sp,
+                            color = if (recordSharingConsent) Color(0xFF166534) else MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = if (recordSharingConsent) "${appointment.doctorName} can view your prescriptions & reports. Revocable anytime." else "Voluntarily allow doctor temporary 24-hr access for this consultation.",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Checkbox(
+                    checked = recordSharingConsent,
+                    onCheckedChange = { recordSharingConsent = it },
+                    colors = CheckboxDefaults.colors(checkedColor = MediTeal)
+                )
             }
         }
     }

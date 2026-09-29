@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,10 +21,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.core.security.UserRole
+import com.example.presentation.screens.activity.RecentActivityScreen
 import com.example.presentation.screens.appointment.AppointmentQueueScreen
 import com.example.presentation.screens.auth.AuthScreen
 import com.example.presentation.screens.documents.MyDocumentsScreen
 import com.example.presentation.screens.emergency.EmergencyBottomSheet
+import com.example.presentation.screens.emergency.EmergencyHealthInfoScreen
 import com.example.presentation.screens.health.HealthScreen
 import com.example.presentation.screens.home.HomeScreen
 import com.example.presentation.screens.hospital.HospitalDiscoveryScreen
@@ -32,30 +35,35 @@ import com.example.presentation.screens.order.OrderDeliveryScreen
 import com.example.presentation.screens.portals.RolePortalScreen
 import com.example.presentation.screens.prescription.PrescriptionAiScreen
 import com.example.presentation.screens.settings.ApiConfigScreen
+import com.example.presentation.screens.summary.MyHealthSummaryScreen
 import com.example.presentation.viewmodel.*
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null, val testTag: String = "") {
     data object Auth : Screen("auth", "Sign In")
     data object Home : Screen("home", "Home", Icons.Default.Home, "bottom_tab_home")
-    data object Hospitals : Screen("hospitals", "Hospitals", Icons.Default.LocalHospital)
-    data object Appointments : Screen("appointments", "Appt", Icons.Default.EventAvailable, "bottom_tab_appt")
-    data object Medicines : Screen("medicines", "Medi", Icons.Default.Medication, "bottom_tab_medi")
-    data object AiAssistant : Screen("ai_assistant", "AI", Icons.Default.AutoAwesome, "bottom_tab_ai")
-    data object Documents : Screen("documents", "Documents", Icons.Default.Folder, "bottom_tab_documents")
-    data object Health : Screen("health", "Health", Icons.Default.Favorite, "bottom_tab_health")
-    data object Orders : Screen("orders", "Orders", Icons.Default.LocalShipping)
-    data object RolePortal : Screen("role_portal", "Portal", Icons.Default.Dashboard)
+    data object HealthSummary : Screen("health_summary", "My Health Summary", Icons.Default.Assessment, "bottom_tab_summary")
+    data object EmergencyInfo : Screen("emergency_info", "Emergency Health Information", Icons.Default.HealthAndSafety, "bottom_tab_emergency")
+    data object RecentActivity : Screen("recent_activity", "Recent Activity", Icons.Default.History, "bottom_tab_activity")
     data object ApiConfig : Screen("api_config", "Settings", Icons.Default.Settings, "bottom_tab_settings")
+
+    // Full-screen features opened from Home feature cards
+    data object Hospitals : Screen("hospitals", "Find Doctor & Hospital")
+    data object Appointments : Screen("appointments", "Book & Live Queue")
+    data object Medicines : Screen("medicines", "Pharmacy & Orders")
+    data object AiAssistant : Screen("ai_assistant", "AI Health Assistant")
+    data object HealthRecords : Screen("health_records", "My Documents")
+    data object Documents : Screen("documents", "My Documents")
+    data object Health : Screen("health", "Medicine Reminders")
+    data object Orders : Screen("orders", "Orders")
+    data object RolePortal : Screen("role_portal", "Portal")
 }
 
-// Exactly 7 tabs in order: Home | Appt | Medi | AI | Documents | Health | Settings
+// Exactly 5 bottom tabs: Home | My Health Summary | Emergency Health Information | Recent Activity | Settings
 val patientBottomTabs = listOf(
     Screen.Home,
-    Screen.Appointments,
-    Screen.Medicines,
-    Screen.AiAssistant,
-    Screen.Documents,
-    Screen.Health,
+    Screen.HealthSummary,
+    Screen.EmergencyInfo,
+    Screen.RecentActivity,
     Screen.ApiConfig
 )
 
@@ -95,16 +103,18 @@ fun MediBridgeNavHost(
                                     Icon(
                                         imageVector = screen.icon!!,
                                         contentDescription = screen.title,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(19.dp)
                                     )
                                 },
                                 label = {
                                     Text(
                                         text = screen.title,
-                                        fontSize = 10.sp,
+                                        fontSize = 8.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        maxLines = 1,
-                                        softWrap = false,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        softWrap = true,
+                                        lineHeight = 9.5.sp,
                                         overflow = TextOverflow.Ellipsis
                                     )
                                 },
@@ -189,13 +199,34 @@ fun MediBridgeNavHost(
                 HomeScreen(
                     currentUser = currentUser,
                     isSeniorMode = isSeniorMode,
-                    onNavigateToHospitals = { navController.navigate(Screen.Hospitals.route) },
-                    onNavigateToAppointments = { navController.navigate(Screen.Appointments.route) },
-                    onNavigateToMedicines = { navController.navigate(Screen.Medicines.route) },
-                    onNavigateToHealthAssistant = { navController.navigate(Screen.AiAssistant.route) },
-                    onNavigateToMyDocuments = { navController.navigate(Screen.Documents.route) },
-                    onNavigateToReminders = { navController.navigate(Screen.Health.route) },
-                    onEmergencyTrigger = { showEmergencyModal = true }
+                    onNavigateToFindDoctorHospital = { navController.navigate(Screen.Hospitals.route) },
+                    onNavigateToBookLiveQueue = { navController.navigate(Screen.Appointments.route) },
+                    onNavigateToAiAssistant = { navController.navigate(Screen.AiAssistant.route) },
+                    onNavigateToPharmacyOrders = { navController.navigate(Screen.Medicines.route) },
+                    onNavigateToMedicineReminders = { navController.navigate(Screen.Health.route) },
+                    onNavigateToMyDocuments = { navController.navigate(Screen.HealthRecords.route) }
+                )
+            }
+
+            composable(Screen.HealthSummary.route) {
+                MyHealthSummaryScreen(
+                    documentsViewModel = documentsViewModel,
+                    appointmentViewModel = appointmentViewModel,
+                    onNavigateToRecords = { navController.navigate(Screen.HealthRecords.route) },
+                    onNavigateToAppointments = { navController.navigate(Screen.Appointments.route) }
+                )
+            }
+
+            composable(Screen.EmergencyInfo.route) {
+                EmergencyHealthInfoScreen(
+                    documentsViewModel = documentsViewModel,
+                    onTriggerSOS = { showEmergencyModal = true }
+                )
+            }
+
+            composable(Screen.RecentActivity.route) {
+                RecentActivityScreen(
+                    documentsViewModel = documentsViewModel
                 )
             }
 
@@ -212,6 +243,7 @@ fun MediBridgeNavHost(
                         )
                         navController.navigate(Screen.Appointments.route)
                     },
+                    onBack = { navController.popBackStack() },
                     onNavigateToApiConfig = { navController.navigate(Screen.ApiConfig.route) }
                 )
             }
@@ -219,6 +251,7 @@ fun MediBridgeNavHost(
             composable(Screen.Appointments.route) {
                 AppointmentQueueScreen(
                     viewModel = appointmentViewModel,
+                    onBack = { navController.popBackStack() },
                     onNavigateToApiConfig = { navController.navigate(Screen.ApiConfig.route) }
                 )
             }
@@ -227,6 +260,7 @@ fun MediBridgeNavHost(
                 MedicinePharmacyScreen(
                     viewModel = medicineViewModel,
                     orderViewModel = orderViewModel,
+                    onBack = { navController.popBackStack() },
                     onNavigateToApiConfig = { navController.navigate(Screen.ApiConfig.route) }
                 )
             }
@@ -234,6 +268,15 @@ fun MediBridgeNavHost(
             composable(Screen.AiAssistant.route) {
                 PrescriptionAiScreen(
                     viewModel = prescriptionAiViewModel,
+                    onBack = { navController.popBackStack() },
+                    onNavigateToApiConfig = { navController.navigate(Screen.ApiConfig.route) }
+                )
+            }
+
+            composable(Screen.HealthRecords.route) {
+                MyDocumentsScreen(
+                    viewModel = documentsViewModel,
+                    onBack = { navController.popBackStack() },
                     onNavigateToApiConfig = { navController.navigate(Screen.ApiConfig.route) }
                 )
             }
@@ -241,6 +284,7 @@ fun MediBridgeNavHost(
             composable(Screen.Documents.route) {
                 MyDocumentsScreen(
                     viewModel = documentsViewModel,
+                    onBack = { navController.popBackStack() },
                     onNavigateToApiConfig = { navController.navigate(Screen.ApiConfig.route) }
                 )
             }
@@ -248,6 +292,7 @@ fun MediBridgeNavHost(
             composable(Screen.Health.route) {
                 HealthScreen(
                     viewModel = reminderViewModel,
+                    onBack = { navController.popBackStack() },
                     onNavigateToApiConfig = { navController.navigate(Screen.ApiConfig.route) }
                 )
             }
@@ -276,6 +321,7 @@ fun MediBridgeNavHost(
                 ApiConfigScreen(
                     authViewModel = authViewModel,
                     currentUser = currentUser,
+                    documentsViewModel = documentsViewModel,
                     onBack = {
                         if (currentUser != null) {
                             if (isPatient) navController.navigate(Screen.Home.route) else navController.navigate(Screen.RolePortal.route)
